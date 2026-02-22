@@ -588,6 +588,10 @@
       <h3>Configuration</h3>
       <div class="api-config">
         <div class="config-row">
+          <label>Worker URL (enables web search)</label>
+          <input type="text" id="workerUrl" placeholder="https://your-worker.workers.dev" />
+        </div>
+        <div class="config-row">
           <label>Anthropic API Key</label>
           <input type="password" id="anthropicKey" placeholder="sk-ant-..." />
         </div>
@@ -800,9 +804,10 @@
     const text = input.value.trim();
     if (!text || isLoading) return;
 
+    const workerUrl = document.getElementById('workerUrl').value.trim();
     const anthropicKey = document.getElementById('anthropicKey').value.trim();
-    if (!anthropicKey) {
-      alert('Add your Anthropic API key in the sidebar to get started!');
+    if (!anthropicKey && !workerUrl) {
+      alert('Add your Anthropic API key (and optionally your Worker URL for web search) in the sidebar!');
       return;
     }
 
@@ -812,37 +817,58 @@
 
     isLoading = true;
     document.getElementById('sendBtn').disabled = true;
-    setStatus('THINKING...', true);
-
-    const typingEl = addTypingIndicator();
 
     const personality = document.getElementById('personality').value;
     const systemPrompt = PERSONALITIES[personality];
 
+    const typingEl = addTypingIndicator();
+
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-6',
-          max_tokens: 400,
-          system: systemPrompt,
-          messages: conversationHistory
-        })
-      });
+      let aiText = '';
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error?.message || 'API error');
+      if (workerUrl) {
+        // Route through Cloudflare Worker (web search enabled)
+        setStatus('SEARCHING...', true);
+        const response = await fetch(workerUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system: systemPrompt,
+            messages: conversationHistory,
+            anthropicKey: anthropicKey
+          })
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Worker error');
+        }
+        const data = await response.json();
+        aiText = data.text;
+      } else {
+        // Direct API call (no web search)
+        setStatus('THINKING...', true);
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 400,
+            system: systemPrompt,
+            messages: conversationHistory
+          })
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error?.message || 'API error');
+        }
+        const data = await response.json();
+        aiText = data.content[0].text;
       }
-
-      const data = await response.json();
-      const aiText = data.content[0].text;
 
       removeTypingIndicator();
       addMessage('ai', aiText);
