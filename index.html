@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOT TAKE — AI Sports Podcast Co-Host</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --accent: #ff3d00;
+    --accent2: #ffab00;
+    --text: #f0f0f0;
+    --muted: #666;
+    --border: #2a2a2a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 4px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .logo .dot.recording {
+    background: var(--accent);
+    animation: pulse-fast 0.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse-fast {
+    0%, 100% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 10px var(--accent); }
+    50% { opacity: 0.7; transform: scale(0.9); }
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .status-indicator {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+
+  .status-indicator.active { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+
+  /* SETUP PANEL */
+  .setup-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    border-radius: 2px;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .field select option { background: var(--surface2); }
+
+  /* MAIN LAYOUT */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0;
+    height: calc(100vh - 140px);
+  }
+
+  /* CHAT */
+  .chat-area {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .message {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    animation: slide-in 0.3s ease;
+  }
+
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 38px; height: 38px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .avatar.ai {
+    background: var(--accent);
+    color: white;
+  }
+
+  .avatar.user-av {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .bubble {
+    max-width: 75%;
+    padding: 14px 18px;
+    line-height: 1.6;
+    font-size: 0.92rem;
+    position: relative;
+  }
+
+  .message.ai .bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+  }
+
+  .message.user .bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    text-align: right;
+  }
+
+  .bubble .speaker {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .message.user .bubble .speaker { color: var(--muted); }
+
+  .speaking-indicator {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+  }
+
+  .speaking-indicator span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+
+  .speaking-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .speaking-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* INPUT AREA */
+  .input-area {
+    padding: 20px 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    background: var(--bg);
+  }
+
+  .text-input-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .text-input-wrap textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+    rows: 2;
+  }
+
+  .text-input-wrap textarea:focus { border-color: var(--accent); }
+  .text-input-wrap textarea::placeholder { color: var(--muted); }
+
+  .btn {
+    padding: 12px 22px;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 2px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover { background: #ff5722; }
+  .btn-primary:disabled { background: var(--muted); cursor: not-allowed; }
+
+  .btn-mic {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    font-size: 1.2rem;
+  }
+
+  .btn-mic:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-mic.listening { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* SIDEBAR */
+  .sidebar {
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .sidebar-section h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .co-host-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 2px;
+  }
+
+  .co-host-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+
+  .co-host-tagline {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
+  .personality-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 2px;
+  }
+
+  .debate-topics {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .topic-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .topic-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(255, 61, 0, 0.06);
+  }
+
+  .api-config {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .config-row label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .config-row input, .config-row select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    border-radius: 2px;
+  }
+
+  .config-row input:focus, .config-row select:focus { border-color: var(--accent2); }
+
+  .info-box {
+    background: rgba(255, 171, 0, 0.08);
+    border: 1px solid rgba(255, 171, 0, 0.3);
+    padding: 12px;
+    border-radius: 2px;
+    font-size: 0.8rem;
+    color: var(--accent2);
+    line-height: 1.5;
+  }
+
+  .info-box a { color: var(--accent2); }
+
+  .waveform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 40px;
+    margin: 10px 0;
+  }
+
+  .wave-bar {
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: wave 1s ease-in-out infinite;
+    opacity: 0.3;
+  }
+
+  .wave-bar.active { opacity: 1; }
+
+  @keyframes wave {
+    0%, 100% { height: 4px; }
+    50% { height: 28px; }
+  }
+
+  .wave-bar:nth-child(1) { animation-delay: 0s; }
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(5) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(6) { animation-delay: 0.1s; }
+  .wave-bar:nth-child(7) { animation-delay: 0s; }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0.4;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+  }
+
+  .empty-state h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 3px;
+  }
+
+  .empty-state p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    max-width: 280px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="dot" id="recDot"></div>
+    HOT TAKE
+  </div>
+  <div class="status-bar">
+    <div class="status-indicator" id="statusDot"></div>
+    <span id="statusText">OFFLINE</span>
+  </div>
+</header>
+
+<div class="main">
+  <!-- CHAT -->
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🎙️</div>
+        <h2>DROP A HOT TAKE</h2>
+        <p>Hit a debate topic on the right or type your own. Your AI co-host will fire back — hard.</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="text-input-wrap">
+        <textarea id="userInput" placeholder="Say something controversial..." rows="2"></textarea>
+      </div>
+      <button class="btn btn-mic" id="micBtn" title="Voice input">🎤</button>
+      <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()">SEND</button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- CO-HOST -->
+    <div class="sidebar-section">
+      <h3>Your Co-Host</h3>
+      <div class="co-host-card">
+        <div class="co-host-name" id="coHostName">REX COLEMAN</div>
+        <div class="co-host-tagline" id="coHostTagline">"Stats don't lie, but fans do."</div>
+        <div class="waveform" id="waveform">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+        <div class="personality-tags">
+          <span class="tag">Contrarian</span>
+          <span class="tag">Stats-obsessed</span>
+          <span class="tag">Never backs down</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOT TOPICS -->
+    <div class="sidebar-section">
+      <h3>Drop a Topic</h3>
+      <div class="debate-topics">
+        <button class="topic-btn" onclick="startTopic(this.textContent)">🏀 LeBron vs Jordan — who's the GOAT?</button>
+        <button class="topic-btn" onclick="startTopic(this.textContent)">⚾ Is the DH rule ruining baseball?</button>
+        <button class="topic-btn" onclick="startTopic(this.textContent)">🏈 Is Patrick Mahomes already a top-5 QB of all time?</button>
+        <button class="topic-btn" onclick="startTopic(this.textContent)">⚽ Should MLS be taken seriously as a league?</button>
+        <button class="topic-btn" onclick="startTopic(this.textContent)">🏒 Is the NHL the most underrated sport in America?</button>
+        <button class="topic-btn" onclick="startTopic(this.textContent)">🎾 Is Djokovic the greatest tennis player ever?</button>
+      </div>
+    </div>
+
+    <!-- API SETTINGS -->
+    <div class="sidebar-section">
+      <h3>Configuration</h3>
+      <div class="api-config">
+        <div class="config-row">
+          <label>Anthropic API Key</label>
+          <input type="password" id="anthropicKey" placeholder="sk-ant-..." />
+        </div>
+        <div class="config-row">
+          <label>ElevenLabs API Key</label>
+          <input type="password" id="elevenKey" placeholder="Optional — for voice" />
+        </div>
+        <div class="config-row">
+          <label>ElevenLabs Voice ID</label>
+          <input type="text" id="voiceId" placeholder="voice_id from ElevenLabs" value="onwK4e9ZLuTAKqWW03F9" />
+        </div>
+        <div class="config-row">
+          <label>Co-Host Name</label>
+          <input type="text" id="hostNameInput" placeholder="Rex Coleman" value="Rex Coleman" oninput="updateHostName(this.value)" />
+        </div>
+        <div class="config-row">
+          <label>Co-Host Personality</label>
+          <select id="personality">
+            <option value="contrarian">Contrarian — always pushes back</option>
+            <option value="analytical">Analytical — stats and logic only</option>
+            <option value="trash_talk">Trash talker — cocky and funny</option>
+            <option value="historian">Historian — everything is about eras</option>
+            <option value="hot_take">Hot take machine — maximally spicy</option>
+          </select>
+        </div>
+        <div class="info-box">
+          Keys stay in your browser — never sent anywhere except the official APIs. Get keys at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // --- STATE ---
+  let conversationHistory = [];
+  let isLoading = false;
+  let recognition = null;
+  let isListening = false;
+  let isSpeaking = false;
+
+  const PERSONALITIES = {
+    contrarian: `You are Rex Coleman, a sports podcast co-host who ALWAYS pushes back on whatever the host says. You are smart, opinionated, and never agree without a fight. You use real sports stats and history to make your points. You're entertaining and a little cocky. Keep responses to 2-4 punchy sentences. Never back down, even when pressed.`,
+    analytical: `You are Rex Coleman, a data-driven sports analyst co-host. You cite real statistics, advanced metrics, and historical data. You push back with evidence, not emotion. Occasionally condescending about fans who "don't look at the numbers." 2-4 sentences.`,
+    trash_talk: `You are Rex Coleman, a trash-talking sports co-host who loves to clown on bad takes. You're funny, a little savage, but not mean-spirited. You keep it light but you absolutely will roast a bad argument. 2-4 sentences, punchy.`,
+    historian: `You are Rex Coleman, a sports historian who sees everything through the lens of eras and context. You constantly reference past players and historical parallels. You're skeptical of modern hype. 2-4 sentences.`,
+    hot_take: `You are Rex Coleman, the hottest take machine in sports media. Every opinion is maximally spicy and confident. You make bold predictions and controversial statements. You love chaos. 2-4 sentences.`
+  };
+
+  // --- SETUP SPEECH RECOGNITION ---
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      document.getElementById('userInput').value = transcript;
+      stopListening();
+      sendMessage();
+    };
+
+    recognition.onend = () => stopListening();
+    recognition.onerror = () => stopListening();
+  } else {
+    document.getElementById('micBtn').style.display = 'none';
+  }
+
+  document.getElementById('micBtn').addEventListener('click', () => {
+    if (isListening) stopListening();
+    else startListening();
+  });
+
+  function startListening() {
+    if (!recognition) return;
+    isListening = true;
+    recognition.start();
+    const btn = document.getElementById('micBtn');
+    btn.classList.add('listening');
+    btn.textContent = '🔴';
+    setStatus('LISTENING', true);
+  }
+
+  function stopListening() {
+    isListening = false;
+    if (recognition) recognition.stop();
+    const btn = document.getElementById('micBtn');
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+    setStatus('READY', true);
+  }
+
+  // --- UI HELPERS ---
+  function setStatus(text, online = false) {
+    document.getElementById('statusText').textContent = text;
+    document.getElementById('statusDot').className = 'status-indicator' + (online ? ' active' : '');
+  }
+
+  function updateHostName(name) {
+    document.getElementById('coHostName').textContent = name.toUpperCase() || 'REX COLEMAN';
+  }
+
+  function setWaveform(active) {
+    const bars = document.querySelectorAll('.wave-bar');
+    bars.forEach(b => b.classList.toggle('active', active));
+    document.getElementById('recDot').classList.toggle('recording', active);
+  }
+
+  function addMessage(role, text) {
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    const msgs = document.getElementById('messages');
+    const hostName = document.getElementById('hostNameInput').value || 'Rex Coleman';
+
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = `avatar ${role === 'ai' ? 'ai' : 'user-av'}`;
+    avatar.textContent = role === 'ai' ? (hostName[0] || 'R') : 'YOU';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    const speaker = document.createElement('div');
+    speaker.className = 'speaker';
+    speaker.textContent = role === 'ai' ? hostName.toUpperCase() : 'YOU';
+
+    const content = document.createElement('div');
+    content.textContent = text;
+
+    bubble.appendChild(speaker);
+    bubble.appendChild(content);
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function addTypingIndicator() {
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    const msgs = document.getElementById('messages');
+    const hostName = document.getElementById('hostNameInput').value || 'Rex Coleman';
+
+    const div = document.createElement('div');
+    div.className = 'message ai';
+    div.id = 'typingIndicator';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar ai';
+    avatar.textContent = hostName[0] || 'R';
+
+    const indicator = document.createElement('div');
+    indicator.className = 'speaking-indicator';
+    indicator.innerHTML = '<span></span><span></span><span></span>';
+
+    div.appendChild(avatar);
+    div.appendChild(indicator);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function removeTypingIndicator() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+  }
+
+  // --- CORE LOGIC ---
+  async function startTopic(topic) {
+    document.getElementById('userInput').value = topic;
+    sendMessage();
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text || isLoading) return;
+
+    const anthropicKey = document.getElementById('anthropicKey').value.trim();
+    if (!anthropicKey) {
+      alert('Add your Anthropic API key in the sidebar to get started!');
+      return;
+    }
+
+    input.value = '';
+    addMessage('user', text);
+    conversationHistory.push({ role: 'user', content: text });
+
+    isLoading = true;
+    document.getElementById('sendBtn').disabled = true;
+    setStatus('THINKING...', true);
+
+    const typingEl = addTypingIndicator();
+
+    const personality = document.getElementById('personality').value;
+    const systemPrompt = PERSONALITIES[personality];
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-6',
+          max_tokens: 400,
+          system: systemPrompt,
+          messages: conversationHistory
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || 'API error');
+      }
+
+      const data = await response.json();
+      const aiText = data.content[0].text;
+
+      removeTypingIndicator();
+      addMessage('ai', aiText);
+      conversationHistory.push({ role: 'assistant', content: aiText });
+
+      // TTS via ElevenLabs
+      const elevenKey = document.getElementById('elevenKey').value.trim();
+      if (elevenKey) {
+        await speak(aiText, elevenKey);
+      }
+
+      setStatus('READY', true);
+
+    } catch (err) {
+      removeTypingIndicator();
+      addMessage('ai', `⚠️ Error: ${err.message}`);
+      setStatus('ERROR', false);
+    }
+
+    isLoading = false;
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  async function speak(text, apiKey) {
+    const voiceId = document.getElementById('voiceId').value.trim() || 'onwK4e9ZLuTAKqWW03F9';
+    setStatus('SPEAKING...', true);
+    setWaveform(true);
+
+    try {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey
+        },
+        body: JSON.stringify({
+          text: text,
+          model_id: 'eleven_monolingual_v1',
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        })
+      });
+
+      if (!response.ok) throw new Error('TTS failed');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+
+      await new Promise((resolve) => {
+        audio.onended = resolve;
+        audio.onerror = resolve;
+        audio.play();
+      });
+
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.warn('TTS error:', e);
+    }
+
+    setWaveform(false);
+    setStatus('READY', true);
+  }
+
+  // Enter to send
+  document.getElementById('userInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Init
+  setStatus('ENTER API KEY', false);
+  document.getElementById('anthropicKey').addEventListener('input', (e) => {
+    if (e.target.value.trim()) setStatus('READY', true);
+    else setStatus('ENTER API KEY', false);
+  });
+</script>
+</body>
+</html>
