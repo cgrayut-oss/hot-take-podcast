@@ -642,19 +642,45 @@
   if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
 
+    let silenceTimer = null;
+    let finalTranscript = '';
+
     recognition.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
-      document.getElementById('userInput').value = transcript;
-      stopListening();
-      sendMessage();
+      let interim = '';
+      finalTranscript = '';
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalTranscript += e.results[i][0].transcript;
+        } else {
+          interim += e.results[i][0].transcript;
+        }
+      }
+      // Show live transcript in input box
+      document.getElementById('userInput').value = finalTranscript || interim;
+
+      // Reset silence timer — send after 1.5s of no new words
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        if (finalTranscript.trim()) {
+          recognition.stop();
+          stopListening();
+          sendMessage();
+        }
+      }, 1500);
     };
 
-    recognition.onend = () => stopListening();
-    recognition.onerror = () => stopListening();
+    recognition.onend = () => {
+      clearTimeout(silenceTimer);
+      stopListening();
+    };
+    recognition.onerror = () => {
+      clearTimeout(silenceTimer);
+      stopListening();
+    };
   } else {
     document.getElementById('micBtn').style.display = 'none';
   }
