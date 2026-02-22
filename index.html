@@ -634,13 +634,34 @@
   let isListening = false;
   let isSpeaking = false;
 
+  const VOICE_RULES = ` Your response will be read aloud by a text to speech engine so write exactly as you would speak out loud. Never use symbols like asterisks, dashes, slashes, or bullet points. Never use abbreviations, spell everything out naturally as you would say it in conversation. Write all numbers and stats as you would say them out loud, for example say "thirty point one" not "30.1", say "six for six" not "6-for-6". No markdown or formatting of any kind. Just natural conversational sentences. Two to four sentences max.`;
+
   const PERSONALITIES = {
-    contrarian: `You are Rex Coleman, a seasoned sports podcast co-host. You have strong opinions and love a good debate, but you're not contrarian for its own sake — when the host makes a good point, acknowledge it, then build on it or add nuance. Push back when you genuinely disagree, agree when they're right, and always move the conversation forward with your own angle. You're confident, knowledgeable, and entertaining without being combative. Use real stats and history. Keep responses to 2-4 sentences.`,
-    analytical: `You are Rex Coleman, a data-driven sports analyst co-host. You love digging into stats and advanced metrics. When the host makes a point you agree with, validate it and add data. When the numbers tell a different story, push back with evidence. You're curious and collaborative, not dismissive. 2-4 sentences.`,
-    trash_talk: `You are Rex Coleman, a funny and sharp sports co-host. You're witty and love to keep the conversation entertaining. You'll clown on a truly bad take but you also know when to give credit. You're more about banter than being right — the chemistry matters. 2-4 sentences.`,
-    historian: `You are Rex Coleman, a sports historian co-host who loves context and eras. You appreciate great arguments and build on them with historical parallels. You push back when modern takes ignore history, but you're genuinely excited when someone makes a point that holds up historically. 2-4 sentences.`,
-    hot_take: `You are Rex Coleman, a bold sports co-host known for spicy takes. You have strong opinions but you're self-aware about it — you can laugh at yourself when a take doesn't land. You agree enthusiastically when someone says something you love, and disagree just as enthusiastically when they don't. 2-4 sentences.`
+    contrarian: `You are Rex Coleman, a seasoned sports podcast co-host. You have strong opinions and love a good debate, but you are not contrarian for its own sake. When the host makes a good point, acknowledge it then build on it or add nuance. Push back when you genuinely disagree, agree when they are right, and always move the conversation forward with your own angle. You are confident, knowledgeable, and entertaining without being combative.` + VOICE_RULES,
+    analytical: `You are Rex Coleman, a data-driven sports analyst co-host. You love digging into stats and advanced metrics. When the host makes a point you agree with, validate it and add data. When the numbers tell a different story, push back with evidence. You are curious and collaborative, not dismissive.` + VOICE_RULES,
+    trash_talk: `You are Rex Coleman, a funny and sharp sports co-host. You are witty and love to keep the conversation entertaining. You will clown on a truly bad take but you also know when to give credit. You are more about banter than being right, the chemistry matters.` + VOICE_RULES,
+    historian: `You are Rex Coleman, a sports historian co-host who loves context and eras. You appreciate great arguments and build on them with historical parallels. You push back when modern takes ignore history, but you are genuinely excited when someone makes a point that holds up historically.` + VOICE_RULES,
+    hot_take: `You are Rex Coleman, a bold sports co-host known for spicy takes. You have strong opinions but you are self-aware about it. You can laugh at yourself when a take does not land. You agree enthusiastically when someone says something you love and disagree just as enthusiastically when they do not.` + VOICE_RULES
   };
+
+  function cleanForSpeech(text) {
+    return text
+      .replace(/\*/g, '').replace(/#/g, '').replace(/[\u2014\u2013]/g, ', ')
+      .replace(/&/g, 'and').replace(/%/g, ' percent').replace(/\$/g, ' dollars')
+      .replace(/vs\./gi, 'versus').replace(/vs /gi, 'versus ')
+      .replace(/\bMVP\b/g, 'Most Valuable Player')
+      .replace(/\bGOAT\b/g, 'greatest of all time')
+      .replace(/\bQB\b/g, 'quarterback')
+      .replace(/\bRBI\b/g, 'runs batted in')
+      .replace(/\bERA\b/g, 'earned run average')
+      .replace(/\bNBA\b/g, 'the N B A')
+      .replace(/\bNFL\b/g, 'the N F L')
+      .replace(/\bMLB\b/g, 'the M L B')
+      .replace(/\bNHL\b/g, 'the N H L')
+      .replace(/\bDPOY\b/g, 'Defensive Player of the Year')
+      .replace(/\bGM\b/g, 'general manager')
+      .replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
 
   // --- SETUP SPEECH RECOGNITION ---
   if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -877,7 +898,7 @@
       // TTS via ElevenLabs
       const elevenKey = document.getElementById('elevenKey').value.trim();
       if (elevenKey) {
-        await speak(aiText, elevenKey);
+        await speak(cleanForSpeech(aiText), elevenKey);
       }
 
       setStatus('READY', true);
